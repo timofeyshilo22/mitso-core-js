@@ -1,60 +1,134 @@
-/**
- * You will complete the PaginationHelper class,
- * which is a utility class helpful for querying paging information related to an array.
- * The class is designed to take in an array of values and an integer
- * indicating how many items will be allowed per each page.
- * The types of values contained within the collection/array are not relevant.
- *
- * The following are some examples of how this class is used:
- * @example
- *     const helper = new PaginationHelper(['a','b','c','d','e','f'], 4);
- *     helper.pageCount(); //should == 2
- *     helper.itemCount(); //should == 6
- *     helper.pageItemCount(0); //should == 4
- *     helper.pageItemCount(1); // last page - should == 2
- *     helper.pageItemCount(2); // should == -1 since the page is invalid
- *
- *     // pageIndex takes an item index and returns the page that it belongs on
- *     helper.pageIndex(5); //should == 1 (zero based index)
- *     helper.pageIndex(2); //should == 0
- *     helper.pageIndex(20); //should == -1
- *     helper.pageIndex(-10); //should == -1
- */
+function Rectangle(width, height) {
+  this.width = width;
+  this.height = height;
+}
 
-class PaginationHelper {
-  // The constructor takes in an array of items and a integer indicating how many
-  // items fit within a single page
-  constructor(/* collection, itemsPerPage */) {
-    throw new Error('Not implemented');
+Rectangle.prototype.getArea = function getArea() {
+  return this.width * this.height;
+};
+
+function getJSON(obj) {
+  return JSON.stringify(obj);
+}
+
+function fromJSON(proto, json) {
+  const obj = JSON.parse(json);
+  Object.setPrototypeOf(obj, proto);
+  return obj;
+}
+
+class CssSelector {
+  constructor() {
+    this.parts = [];
+    this.usedTypes = new Set();
   }
 
-  // returns the number of items within the entire collection
-  itemCount() {
-    console.log(this);
-    throw new Error('Not implemented');
+  element(value) {
+    this.validateOrder(1);
+    this.validateUnique('element');
+    this.parts.push(value);
+    this.usedTypes.add('element');
+    return this;
   }
 
-  // returns the number of pages
-  pageCount() {
-    console.log(this);
-    throw new Error('Not implemented');
+  id(value) {
+    this.validateOrder(2);
+    this.validateUnique('id');
+    this.parts.push(`#${value}`);
+    this.usedTypes.add('id');
+    return this;
   }
 
-  // returns the number of items on the current page. page_index is zero based.
-  // this method should return -1 for pageIndex values that are out of range
-  pageItemCount() {
-    console.log(this);
-    throw new Error('Not implemented');
+  class(value) {
+    this.validateOrder(3);
+    this.parts.push(`.${value}`);
+    return this;
   }
 
-  // determines what page an item is on. Zero based indexes
-  // this method should return -1 for itemIndex values that are out of range
-  pageIndex() {
-    console.log(this);
-    throw new Error('Not implemented');
+  attr(value) {
+    this.validateOrder(4);
+    this.parts.push(`[${value}]`);
+    return this;
+  }
+
+  pseudoClass(value) {
+    this.validateOrder(5);
+    this.parts.push(`:${value}`);
+    return this;
+  }
+
+  pseudoElement(value) {
+    this.validateOrder(6);
+    this.validateUnique('pseudoElement');
+    this.parts.push(`::${value}`);
+    this.usedTypes.add('pseudoElement');
+    return this;
+  }
+
+  validateOrder(type) {
+    const order = {
+      element: 1,
+      id: 2,
+      class: 3,
+      attr: 4,
+      pseudoClass: 5,
+      pseudoElement: 6,
+    };
+    if (this.lastType && order[this.lastType] > type) {
+      throw new Error('Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element');
+    }
+    this.lastType = Object.keys(order).find((key) => order[key] === type);
+  }
+
+  validateUnique(type) {
+    if (this.usedTypes.has(type)) {
+      throw new Error('Element, id and pseudo-element should not occur more then one time inside the selector');
+    }
+  }
+
+  stringify() {
+    return this.parts.join('');
   }
 }
 
+const cssSelectorBuilder = {
+  element(value) {
+    return new CssSelector().element(value);
+  },
+
+  id(value) {
+    return new CssSelector().id(value);
+  },
+
+  class(value) {
+    return new CssSelector().class(value);
+  },
+
+  attr(value) {
+    return new CssSelector().attr(value);
+  },
+
+  pseudoClass(value) {
+    return new CssSelector().pseudoClass(value);
+  },
+
+  pseudoElement(value) {
+    return new CssSelector().pseudoElement(value);
+  },
+
+  combine(selector1, combinator, selector2) {
+    const combined = new CssSelector();
+    combined.parts = [`${selector1.stringify()} ${combinator} ${selector2.stringify()}`];
+    return combined;
+  },
+};
+
+const PaginationHelper = require('./pagination-helper');
+
 module.exports = {
+  Rectangle,
+  getJSON,
+  fromJSON,
+  cssSelectorBuilder,
   PaginationHelper,
 };
